@@ -8,15 +8,18 @@ function createEmployeeRecord(employeeData) {
       payPerHour: employeeData[3],
       timeInEvents: [],
       timeOutEvents: [],
+      hoursWorkedOnDate: hoursWorkedOnDate,
+      wagesEarnedOnDate: wagesEarnedOnDate,
+      allWagesFor: allWagesFor,
+      createTimeInEvent: createTimeInEvent,
+      createTimeOutEvent: createTimeOutEvent,
     };
   }
   
-  // Function to create employee records from an array of arrays
   function createEmployeeRecords(arr) {
     return arr.map(createEmployeeRecord);
   }
   
-  // Function to create time-in events
   function createTimeInEvent(dateStamp) {
     const [date, hour] = dateStamp.split(" ");
   
@@ -30,8 +33,8 @@ function createEmployeeRecord(employeeData) {
   
     return this;
   }
+  createEmployeeRecord.prototype.createTimeInEvent = createTimeInEvent;
   
-  // Function to create time-out events
   function createTimeOutEvent(dateStamp) {
     const [date, hour] = dateStamp.split(" ");
     const timeOutEvent = {
@@ -42,55 +45,52 @@ function createEmployeeRecord(employeeData) {
   
     this.timeOutEvents.push(timeOutEvent);
     return this;
+}
+createEmployeeRecord.prototype.createTimeOutEvent = createTimeOutEvent;
+
+function hoursWorkedOnDate(date) {
+  const timeInEvent = this.timeInEvents.find((event) => event.date === date);
+  const timeOutEvent = this.timeOutEvents.find((event) => event.date === date);
+
+  if (timeInEvent && timeOutEvent) {
+    const timeInHour = Math.floor(timeInEvent.hour / 100);
+    const timeOutHour = Math.floor(timeOutEvent.hour / 100);
+
+    const hoursWorked = timeOutHour - timeInHour;
+    return hoursWorked;
+  } else {
+    return 0;
   }
-  
-  // Function to calculate hours worked on a specific date
-  function hoursWorkedOnDate(date) {
-    const timeInEvent = this.timeInEvents.find((event) => event.date === date);
-    const timeOutEvent = this.timeOutEvents.find((event) => event.date === date);
-  
-    if (timeInEvent && timeOutEvent) {
-      const timeInHour = Math.floor(timeInEvent.hour / 100);
-      const timeOutHour = Math.floor(timeOutEvent.hour / 100);
-  
-      const hoursWorked = timeOutHour - timeInHour;
-      return hoursWorked;
-    } else {
-      return 0;
-    }
-  }
-  
-  // Function to calculate wages earned on a specific date
-  function wagesEarnedOnDate(date) {
+}
+createEmployeeRecord.prototype.hoursWorkedOnDate = hoursWorkedOnDate;
+function wagesEarnedOnDate(date) {
     const hoursWorked = this.hoursWorkedOnDate(date);
     const payOwed = hoursWorked * this.payPerHour;
     return payOwed;
-  }
-  
-  // Function to calculate total wages for all dates worked
-  function allWagesFor() {
-    return this.timeInEvents
-      .filter((timeInEvent) =>
-        this.timeOutEvents.some(
-          (timeOutEvent) => timeOutEvent.date === timeInEvent.date
-        )
+}
+
+function allWagesFor() {
+  const datesWorked = this.timeInEvents
+    .filter((timeInEvent) =>
+      this.timeOutEvents.some(
+        (timeOutEvent) => timeOutEvent.date === timeInEvent.date
       )
-      .reduce((sum, timeInEvent) => sum + this.wagesEarnedOnDate(timeInEvent.date), 0);
-  }
-  
-  // Function to find an employee by first name
-  function findEmployeeByFirstName(srcArray, firstName) {
-    return srcArray.find((employee) => employee.firstName === firstName);
-  }
-  
-  // Function to calculate total payroll for all employees
-  function calculatePayroll(employeeArray) {
-    return employeeArray.reduce(
-      (totalPayroll, employee) => totalPayroll + employee.allWagesFor(),
-      0
-    );
-  }
-  
-
-
-  
+    )
+    .map((timeInEvent) => timeInEvent.date);
+    const totalWages = datesWorked.reduce(
+        (sum, date) => sum + this.wagesEarnedOnDate(date),
+        0
+      );
+    
+      return totalWages;
+    }
+    function findEmployeeByFirstName(srcArray, firstName) {
+        return srcArray.find((employee) => employee.firstName === firstName);
+      }
+      
+      function calculatePayroll(employeeArray) {
+        return employeeArray.reduce(
+          (totalPayroll, employee) => totalPayroll + employee.allWagesFor(),
+          0
+        );
+      }
